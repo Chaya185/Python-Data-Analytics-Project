@@ -3,8 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Load your dataset (replace with your dataset or simulated data)
-data_path = "consistent_top_performers.csv"  # Replace with your actual file path
+data_path = "consistent_top_pitchers.csv"  
 consistent_pitchers = pd.read_csv(data_path)
 
 # Define UI
