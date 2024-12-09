@@ -10,16 +10,16 @@ consistent_pitchers = pd.read_csv(data_path)
 app_ui = ui.page_fluid(
     ui.h2("MLB Dashboard"),
     ui.navset_tab(
-        ui.nav_tab(
+        ui.nav(
             "Consistent Performers",
             ui.output_plot("consistent_performers_plot"),
         ),
-        ui.nav_tab(
+        ui.nav(
             "Data Upload",
             ui.input_file("upload_file", "Upload a CSV file", accept=".csv"),
             ui.output_table("uploaded_data"),
         ),
-        ui.nav_tab(
+        ui.nav(
             "Player Comparison",
             ui.input_select("player_filter", "Select Player", choices=[]),
             ui.output_plot("player_comparison_plot"),
@@ -40,7 +40,7 @@ def server(input, output, session):
 
     # Plot: Consistent Performers
     @output
-    @render.plot
+    @ui.render.plot
     def consistent_performers_plot():
         consistent_counts = consistent_pitchers['player_id'].value_counts()
         plt.figure(figsize=(12, 6))
@@ -54,7 +54,7 @@ def server(input, output, session):
 
     # Table: Show uploaded data
     @output
-    @render.table
+    @ui.render.table
     def uploaded_data():
         return uploaded_data()
 
@@ -66,7 +66,7 @@ def server(input, output, session):
 
     # Plot: Player Comparison
     @output
-    @render.plot
+    @ui.render.plot
     def player_comparison_plot():
         selected_player = input.player_filter()
         df = uploaded_data()
