@@ -1,0 +1,86 @@
+from shiny import App, ui, reactive
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load your dataset (replace with your dataset or simulated data)
+data_path = "consistent_top_performers.csv"  # Replace with your actual file path
+consistent_pitchers = pd.read_csv(data_path)
+
+# Define UI
+app_ui = ui.page_fluid(
+    ui.h2("MLB Dashboard"),
+    ui.navset_tab(
+        ui.nav(
+            "Consistent Performers",
+            ui.output_plot("consistent_performers_plot"),
+        ),
+        ui.nav(
+            "Data Upload",
+            ui.input_file("upload_file", "Upload a CSV file", accept=".csv"),
+            ui.output_table("uploaded_data"),
+        ),
+        ui.nav(
+            "Player Comparison",
+            ui.input_select("player_filter", "Select Player", choices=[]),
+            ui.output_plot("player_comparison_plot"),
+        )
+    )
+)
+
+# Define server logic
+def server(input, output, session):
+    # Reactive: Load uploaded data
+    @reactive.Effect
+    def uploaded_data():
+        if input.upload_file():
+            file = input.upload_file()[0]
+            df = pd.read_csv(file['datapath'])
+            return df
+        return consistent_pitchers
+
+    # Plot: Consistent Performers
+    @output
+    @render.plot
+    def consistent_performers_plot():
+        consistent_counts = consistent_pitchers['player_id'].value_counts()
+        plt.figure(figsize=(12, 6))
+        sns.barplot(x=consistent_counts.index, y=consistent_counts.values, palette="viridis")
+        plt.title('Consistent Top Performers (More Than 2 Years)', fontsize=16)
+        plt.xlabel('Player ID', fontsize=14)
+        plt.ylabel('Number of Years as Top Performer', fontsize=14)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        return plt.gcf()
+
+    # Table: Show uploaded data
+    @output
+    @render.table
+    def uploaded_data():
+        return uploaded_data()
+
+    # Player Filter Choices
+    @reactive.Effect
+    def update_player_filter():
+        df = uploaded_data()
+        session.send_input_update("player_filter", choices=df['player_id'].unique())
+
+    # Plot: Player Comparison
+    @output
+    @render.plot
+    def player_comparison_plot():
+        selected_player = input.player_filter()
+        df = uploaded_data()
+        if selected_player:
+            player_data = df[df['player_id'] == selected_player]
+            plt.figure(figsize=(12, 6))
+            sns.lineplot(data=player_data, x='year', y='performance_metric', marker="o")
+            plt.title(f'Performance Over Years: {selected_player}', fontsize=16)
+            plt.xlabel('Year', fontsize=14)
+            plt.ylabel('Performance Metric', fontsize=14)
+            plt.grid(True)
+            return plt.gcf()
+        return None
+
+# Run the app
+app = App(app_ui, server)
